@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>F1 RAG Chatbot</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header>
+        <h1>F1 RAG Chatbot</h1>
+        <p>Ask anything about Formula 1 rules, history, and races.</p>
+      </header>
+
+      <main>
+        <div id="chat" class="chat"></div>
+        <form id="chat-form">
+          <input id="user-input" type="text" placeholder="e.g., How do F1 tyre compounds work?" autofocus />
+          <button type="submit">Send</button>
+        </form>
+      </main>
+
+      <footer>
+        <small>Powered by Flask + Ollama + Chroma</small>
+      </footer>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>

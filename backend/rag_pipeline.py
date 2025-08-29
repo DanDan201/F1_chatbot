@@ -8,7 +8,8 @@ from langchain_community.embeddings import OllamaEmbeddings
 from langchain_chroma import Chroma
 from langchain_community.llms import Ollama
 from langchain.schema.runnable import RunnablePassthrough, RunnableLambda
-from langchain.prompts import ChatPromptTemplate
+from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain.memory import ConversationBufferMemory
 from ollama import chat
 
 load_dotenv()
@@ -79,6 +80,7 @@ SYSTEM_PROMPT = (
 
 PROMPT = ChatPromptTemplate.from_messages([
     ("system", SYSTEM_PROMPT),
+    MessagesPlaceholder(variable_name="chat_history"),
     ("human", "Question: {question}\n\nContext:\n\n:Answer")
 ])
 
@@ -103,15 +105,35 @@ def format_docs(docs: List) -> Tuple[str, List[dict]]:
 def build_rag_chain(vectorstore):
     retriever = make_retriever(vectorstore)
 
-    def _context_fn(q):
+    memory = ConversationBufferMemory(
+        memory_key = "chat_history",
+        return_messages=True
+    )
+
+    def _context_fn(inputs):
+        q = inputs["question"]
         docs = retriever.invoke(q)
         ctx, sources = format_docs(docs)
-        return {"context": ctx, "sources": sources, "question": q}
-    
+
+        history = memory.load_memory_variables({})["chat_history"]
+        return {"context": ctx, 
+                "sources": sources, 
+                "question": q,
+                "chat_history": history}
+
     chain = (
-        RunnablePassthrough()
+        {"question": RunnablePassthrough()}
         | RunnableLambda(_context_fn)
-        | PROMPT 
+        | PROMPT
         | get_llm()
     )
-    return chain
+
+    def chain_with_memory(inputs):
+        # run chain
+        answer = chain.invoke(inputs)
+        # save interaction
+        memory.save_context({"input": inputs["question"]}, 
+                            {"output": str(answer)})
+        return {"answer": str(answer)}
+    
+    return RunnableLambda(chain_with_memory)

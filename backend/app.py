@@ -34,12 +34,14 @@ def chat():
     
     try:
         # Invoke Langchain RAG
-        answer = _chain.invoke(question)
+        result = _chain.invoke({"question": question})
 
         # The prompt instructs LLM to cite
-        return jsonify({"answer": str(answer)})
+        return jsonify(result)
     
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         return jsonify({"erorr": str(e)}), 500
     
 if __name__ == "__main__":

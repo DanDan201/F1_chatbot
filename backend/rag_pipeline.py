@@ -17,7 +17,6 @@ load_dotenv()
 OLLAMA_HOST = os.getenv("OLLAMA_HOST")
 LLM_MODEL = os.getenv("LLM_MODEL")
 EMBED_MODEL = os.getenv("EMBED_MODEL")
-CHROMA_DIR = os.getenv("EMBED_MODEL")
 CHROMA_DIR = os.getenv("CHROMA_DIR")
 CHUNK_SIZE = int(os.getenv("CHUNK_SIZE"))
 CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP"))
@@ -73,16 +72,15 @@ def build_or_load_vectorstore(chunks):
 def get_llm():
     return Ollama(model = LLM_MODEL, base_url=OLLAMA_HOST, temperature = 0.1)
 
-SYSTEM_PROMPT = (
-    "You are an expert Formula 1 assistant. Answer using retrieved context. "
-    "If the answer isn't in context, say you don't know. Be concise and cite sources as [S1], [S2]."
-)
-
 PROMPT = ChatPromptTemplate.from_messages([
-    ("system", SYSTEM_PROMPT),
+    ("system", 
+     "You are an expert Formula 1 assistant. Use the retrieved context and the ongoing conversation to answer. "
+     "If the answer is not in the context or the sources, say you don't know.\n\n"
+     "Retrieved context:\n{context}"),
     MessagesPlaceholder(variable_name="chat_history"),
-    ("human", "Question: {question}\n\nContext:\n\n:Answer")
+    ("human", "{question}\n\nAnswer:")
 ])
+
 
 # RAG chain
 def make_retriever(vectorstore):
